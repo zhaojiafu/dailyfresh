@@ -1,1 +1,1 @@
-# dailyfresh
+*.pyc
