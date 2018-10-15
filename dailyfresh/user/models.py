@@ -10,7 +10,10 @@ from db.base_model import BaseModel
 '''
 class User(AbstractUser,BaseModel):
     '''用户模型'''
-    # name= models.CharField(max_length=100,unique=True,null=False)
+    address= models.CharField(max_length=200,null=True)
+    receiver= models.CharField(max_length=20,null=True)
+    phone= models.CharField(max_length=20,null=True)
+    postcode= models.CharField(max_length=10,null=True)
     # pwd= models.CharField(max_length=100,null=False)
     class Meta:
         db_table='df_user'

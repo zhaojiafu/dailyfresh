@@ -27,13 +27,14 @@ class RegisterView(View):
 
     def post(self,request):
         '''进行注册处理'''
-        # 接收数据
+        #验证码
         validate = request.POST.get("validate_code",'').strip().lower()
-        print(validate,22222)
-        print(request.session.get('validate_code').lower(),3333)
+        # print(validate,22222)
+        # print(request.session.get('validate_code').lower(),3333)
         if validate=='' or validate != request.session.get('validate_code').lower():
             return render(request, 'register.html', {'validate_code_error': '验证码错误'})
 
+        # 接收数据
         username = request.POST.get("user_name").lower().strip()
         pwd = request.POST.get("pwd").strip()
         cpwd = request.POST.get("cpwd").strip()
@@ -127,6 +128,59 @@ class ActiveView(View):
             # 激活链接被修改
             return HttpResponse('激活链接非法')
 
+class ForgetPasswordView(View):
+    '''忘记密码'''
+    def get(self,request):
+        return render(request, "forget_password.html")
+
+    def post(self,request):
+        # 跳转到登录界面
+        username = request.POST.get("username")
+        email = request.POST.get("email")
+        # print(username,email)
+
+        try:
+            user = User.objects.get(username=username)
+        except User.DoesNotExist:
+            user = None
+        if user:
+            if user.email==email:
+                #发送邮件
+
+                #发送成功激活时让is_superuser=1,修改密码之后立即改为0，作为判断是否可以修改密码的依据
+                user.is_superuser=1
+                user.save()
+                return redirect(reverse('user:update_password'))
+            else:
+                errors = '此邮箱和用户名注册邮箱不匹配'
+                return render(request,"forget_password.html",{"errors":errors})
+        else:
+            errors = '用户名不存在'
+            return render(request, "forget_password.html", {"errors": errors})
+
+class UpdatePasswordView(View):
+    def get(self,request):
+        print("get")
+        return render(request,"update_password.html")
+
+    def post(self,request):
+        print("post")
+        username = request.POST.get("username")
+        pwd = request.POST.get("pwd")
+        user = User.objects.get(username=username)
+        if user.is_superuser:
+            user.set_password(pwd)
+            # pwd1 = user.password
+            # print(pwd1)
+            user.is_superuser = 0
+            user.save()
+            return redirect(reverse("user:user"))
+        else:
+            errors = "你没有修改密码权限"
+            return render(request,"update_password.html",{"errors":errors})
+
+
+
 
 class LoginView(View):
     '''登录'''
@@ -167,7 +221,6 @@ class LoginView(View):
                     #返回到首页
                     resp = render(request,"index.html")
 
-
                 #判断是否记住用户名
                 if remember:
                     resp.set_cookie("remember_username",username,3600*24*7)
@@ -184,7 +237,21 @@ class UserInfoView(LoginRequiredMixin,View):
     '''用户中心--个人信息'''
     def get(self,request):
         context = {'page':'1'}
-        return  render(request, "user_center_info.html",context)
+        user = User.objects.get(username=request.user)
+        username = user.username
+        address = user.address
+        receiver = user.receiver
+        postcode = user.postcode
+        phone = user.phone
+        user1 = {
+            "address":address,
+            "receiver":receiver,
+            "postcode":postcode,
+            "phone":phone,
+        }
+
+
+        return  render(request, "user_center_info.html",{"user1":user1,"context":context})
 
 
 class UserOrderView(LoginRequiredMixin,View):
@@ -198,7 +265,27 @@ class UserAddressView(LoginRequiredMixin,View):
     '''用户中心--收货地址'''
     def get(self, request):
         context = {'page': '3'}
-        return render(request, "user_center_site.html", context)
+        user = User.objects.get(username=request.user)
+        address = user.address
+        return render(request, "user_center_site.html", {"context":context,"address":address})
+
+    def post(self,request):
+        receiver = request.POST.get("receiver",'')
+        address = request.POST.get("address",'')
+        postcode = request.POST.get("postcode",'')
+        phone = request.POST.get("phone",'')
+
+        username = request.user
+        # print(username,receiver,postcode,address,phone)
+
+        user = User.objects.get(username=username)
+        user.address = address
+        user.receiver = receiver
+        user.postcode = postcode
+        user.phone = phone
+        user.save()
+
+        return redirect(reverse('user:user'))
 
 class UserCarView(LoginRequiredMixin,View):
     '''用户中心--收货地址'''
