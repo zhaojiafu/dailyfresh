@@ -10,7 +10,7 @@ urlpatterns = [
 
     #忘记密码
     url(r'^forget_password$', views.ForgetPasswordView.as_view(), name="forget_password"),  # 忘记密码
-    url(r'^update_password$', views.UpdatePasswordView.as_view(), name="update_password"),  # 修改密码
+    url(r'^update_password/(?P<token>.*)$', views.UpdatePasswordView.as_view(), name="update_password"),  # 修改密码
 
     # 验证码
     url(r'^validate_code$', views.validate_cod, name="validate_code"),  # 注册验证码

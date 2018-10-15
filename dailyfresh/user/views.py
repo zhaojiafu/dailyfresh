@@ -1,37 +1,36 @@
-from django.shortcuts import render,redirect,HttpResponseRedirect
+from django.shortcuts import render, redirect, HttpResponseRedirect
 from django.http import HttpResponse
 import re
 from user.models import *
 from django.core.urlresolvers import reverse
 from django.views.generic import View
 from dailyfresh import settings
-from itsdangerous import TimedJSONWebSignatureSerializer as Serializer,SignatureExpired,BadSignature
+from itsdangerous import TimedJSONWebSignatureSerializer as Serializer, SignatureExpired, BadSignature
 from django.core.mail import send_mail
-from django.contrib.auth import authenticate,login
+from django.contrib.auth import authenticate, login
 from celery_tasks.tasks import task_send_email
 from utils.util import LoginRequiredMixin
 from io import BytesIO
-from PIL import Image,ImageDraw,ImageFont
+from PIL import Image, ImageDraw, ImageFont
 import random
 from django.conf import settings
 from django.contrib.auth import logout
 
 
-
-
 class RegisterView(View):
     '''注册类'''
-    def get(self,request):
+
+    def get(self, request):
         '''注册'''
         return render(request, "register.html")
 
-    def post(self,request):
+    def post(self, request):
         '''进行注册处理'''
-        #验证码
-        validate = request.POST.get("validate_code",'').strip().lower()
+        # 验证码
+        validate = request.POST.get("validate_code", '').strip().lower()
         # print(validate,22222)
         # print(request.session.get('validate_code').lower(),3333)
-        if validate=='' or validate != request.session.get('validate_code').lower():
+        if validate == '' or validate != request.session.get('validate_code').lower():
             return render(request, 'register.html', {'validate_code_error': '验证码错误'})
 
         # 接收数据
@@ -62,7 +61,7 @@ class RegisterView(View):
         if not re.match(r'^[a-z0-9]*[a-z0-9\w]$', username):
             # 用户名必须是数字和英文字母组成
             return render(request, 'register.html', {'name_error': '用户名必须是数字或英文字母开头'})
-        if not 8<=len(pwd) <= 20:
+        if not 8 <= len(pwd) <= 20:
             # 密码必须6位
             return render(request, 'register.html', {'pwd_error': '密码必须8~20位'})
         if not re.match(r'^[a-z0-9]*[a-z0-9]$', pwd):
@@ -82,22 +81,21 @@ class RegisterView(View):
             user.is_active = 0
             user.save()
 
-            #加密用户的身份信息，生成激活token
-            serialize = Serializer(settings.SECRET_KEY,3600)
-            info = {'confirm':user.id}
+            # 加密用户的身份信息，生成激活token
+            serialize = Serializer(settings.SECRET_KEY, 3600)
+            info = {'confirm': user.id}
             token = serialize.dumps(info).decode()
             encryption_url = "http://192.168.12.209:8888/user/active/%s" % token
 
-
             # 发邮件
-            subject = '天天生鲜欢迎信息'#主题
-            message = ''#收件人
-            sender = settings.EMAIL_FROM#发件人
-            receive =[email]#收件人
-            html_message = '<h1>%s,欢迎您成为天天生鲜注册会员</h1>请点击下面链接激活您的账户<br/><a href="%s">%s</a>' % (username,encryption_url,encryption_url)
+            subject = '天天生鲜欢迎信息'  # 主题
+            message = ''  # 收件人
+            sender = settings.EMAIL_FROM  # 发件人
+            receive = [email]  # 收件人
+            html_message = '<h1>%s,欢迎您成为天天生鲜注册会员</h1>请点击下面链接激活您的账户<br/><a href="%s">%s</a>' % (
+            username, encryption_url, encryption_url)
 
-            task_send_email.delay(subject,message,sender,receive,html_message)
-
+            task_send_email.delay(subject, message, sender, receive, html_message)
 
             # 注册成功，跳转登录界面
             # return render(request, "")
@@ -106,15 +104,16 @@ class RegisterView(View):
 
 class ActiveView(View):
     '''用户激活'''
-    def get(self,request,token):
+
+    def get(self, request, token):
         '''进行解密'''
         serialize = Serializer(settings.SECRET_KEY, 3600)
         try:
             info = serialize.loads(token)
-            #获取待激活的id
+            # 获取待激活的id
             user_id = info['confirm']
 
-            #根据id获取用户信息
+            # 根据id获取用户信息
             user = User.objects.get(id=user_id)
             user.is_active = 1
             user.save()
@@ -128,12 +127,14 @@ class ActiveView(View):
             # 激活链接被修改
             return HttpResponse('激活链接非法')
 
+
 class ForgetPasswordView(View):
     '''忘记密码'''
-    def get(self,request):
+
+    def get(self, request):
         return render(request, "forget_password.html")
 
-    def post(self,request):
+    def post(self, request):
         # 跳转到登录界面
         username = request.POST.get("username")
         email = request.POST.get("email")
@@ -144,59 +145,93 @@ class ForgetPasswordView(View):
         except User.DoesNotExist:
             user = None
         if user:
-            if user.email==email:
-                #发送邮件
+            if user.email == email:
+                # 发送邮件
 
-                #发送成功激活时让is_superuser=1,修改密码之后立即改为0，作为判断是否可以修改密码的依据
-                user.is_superuser=1
+                # 加密用户的身份信息，生成激活token
+                serialize = Serializer(settings.SECRET_KEY, 3600)
+                info = {'confirm': user.id}
+                token = serialize.dumps(info).decode()
+                encryption_url = "http://192.168.12.209:8888/user/update_password/%s" % token
+
+                # 发邮件
+                subject = '天天生鲜欢迎信息'  # 主题
+                message = ''  # 收件人
+                sender = settings.EMAIL_FROM  # 发件人
+                receive = [email]  # 收件人
+                html_message = '<h1>%s,欢迎您成为天天生鲜注册会员</h1>请点击下面链接修改您的账户密码<br/><a href="%s">%s</a>' % (
+                    username, encryption_url, encryption_url)
+
+                task_send_email.delay(subject, message, sender, receive, html_message)
+
+                # 发送成功激活时让is_superuser=1,修改密码之后立即改为0，作为判断是否可以修改密码的依据
+                user.is_superuser = 1
                 user.save()
-                return redirect(reverse('user:update_password'))
+                return HttpResponse("请去邮箱进行修改密码")
             else:
                 errors = '此邮箱和用户名注册邮箱不匹配'
-                return render(request,"forget_password.html",{"errors":errors})
+                return render(request, "forget_password.html", {"errors": errors})
         else:
             errors = '用户名不存在'
             return render(request, "forget_password.html", {"errors": errors})
 
 class UpdatePasswordView(View):
-    def get(self,request):
-        print("get")
-        return render(request,"update_password.html")
+    def get(self, request, token):
+        print("get", 111)
+        return render(request, "update_password.html")
 
-    def post(self,request):
-        print("post")
+    def post(self, request, token):
+        print("post", 222)
         username = request.POST.get("username")
         pwd = request.POST.get("pwd")
         user = User.objects.get(username=username)
         if user.is_superuser:
-            user.set_password(pwd)
-            # pwd1 = user.password
-            # print(pwd1)
-            user.is_superuser = 0
-            user.save()
-            return redirect(reverse("user:user"))
+            '''进行解密'''
+            serialize = Serializer(settings.SECRET_KEY, 3600)
+            try:
+                info = serialize.loads(token)
+                # 获取待激活的id
+                user_id = info['confirm']
+
+                # 根据id获取用户信息
+                user = User.objects.get(id=user_id)
+                user.is_active = 1
+                user.is_superuser = 0
+                user.set_password(pwd)
+                user.save()
+
+                # 跳转到登录界面
+                return redirect(reverse('user:login'))
+            except SignatureExpired as e:
+                # 激活链接已过期
+                return HttpResponse('激活链接已过期')
+            except BadSignature as e:
+                # 激活链接被修改
+                return HttpResponse('激活链接非法')
         else:
             errors = "你没有修改密码权限"
-            return render(request,"update_password.html",{"errors":errors})
+            return render(request, "update_password.html", {"errors": errors})
 
 
 
 
 class LoginView(View):
     '''登录'''
-    def get(self,request):
-        #使用模板
-        remember_username = request.COOKIES.get("remember_username","")
 
-        return render(request, "login.html",{"remember_username":remember_username})
-    def post(self,request):
+    def get(self, request):
+        # 使用模板
+        remember_username = request.COOKIES.get("remember_username", "")
+
+        return render(request, "login.html", {"remember_username": remember_username})
+
+    def post(self, request):
         '''进行注册处理'''
         # 接收数据
         username = request.POST.get("username")
         pwd = request.POST.get("pwd")
         remember = request.POST.get("remember")
 
-        #检验用户名是否存在
+        # 检验用户名是否存在
         try:
             user = User.objects.get(username=username)
         except User.DoesNotExist:
@@ -210,33 +245,34 @@ class LoginView(View):
         if user is not None:
             if user.is_active:
                 '''用户激活'''
-                #记住用户登录状态
-                login(request,user)
+                # 记住用户登录状态
+                login(request, user)
 
                 next_url = request.GET.get("next")
 
                 if next_url:
                     resp = redirect(next_url)
                 else:
-                    #返回到首页
-                    resp = render(request,"index.html")
+                    # 返回到首页
+                    resp = render(request, "index.html")
 
-                #判断是否记住用户名
+                # 判断是否记住用户名
                 if remember:
-                    resp.set_cookie("remember_username",username,3600*24*7)
+                    resp.set_cookie("remember_username", username, 3600 * 24 * 7)
                 else:
-                    resp.set_cookie("remember_username", username,0)
+                    resp.set_cookie("remember_username", username, 0)
                 return resp
             else:
-                return render(request,"login.html",{'errors': '未激活，请去邮箱激活'})
+                return render(request, "login.html", {'errors': '未激活，请去邮箱激活'})
         else:
-            return render(request, "login.html",{'errors': '密码错误'})
+            return render(request, "login.html", {'errors': '密码错误'})
 
 
-class UserInfoView(LoginRequiredMixin,View):
+class UserInfoView(LoginRequiredMixin, View):
     '''用户中心--个人信息'''
-    def get(self,request):
-        context = {'page':'1'}
+
+    def get(self, request):
+        # context = {'page':'1'}
         user = User.objects.get(username=request.user)
         username = user.username
         address = user.address
@@ -244,36 +280,37 @@ class UserInfoView(LoginRequiredMixin,View):
         postcode = user.postcode
         phone = user.phone
         user1 = {
-            "address":address,
-            "receiver":receiver,
-            "postcode":postcode,
-            "phone":phone,
+            "address": address,
+            "receiver": receiver,
+            "postcode": postcode,
+            "phone": phone,
         }
 
+        return render(request, "user_center_info.html", {"user1": user1, 'page': '1'})
 
-        return  render(request, "user_center_info.html",{"user1":user1,"context":context})
 
-
-class UserOrderView(LoginRequiredMixin,View):
+class UserOrderView(LoginRequiredMixin, View):
     '''用户中心--订单'''
+
     def get(self, request):
         context = {'page': '2'}
         return render(request, "user_center_order.html", context)
 
 
-class UserAddressView(LoginRequiredMixin,View):
+class UserAddressView(LoginRequiredMixin, View):
     '''用户中心--收货地址'''
+
     def get(self, request):
-        context = {'page': '3'}
+        # context = {'page': '3'}
         user = User.objects.get(username=request.user)
         address = user.address
-        return render(request, "user_center_site.html", {"context":context,"address":address})
+        return render(request, "user_center_site.html", {'page': '3', "address": address})
 
-    def post(self,request):
-        receiver = request.POST.get("receiver",'')
-        address = request.POST.get("address",'')
-        postcode = request.POST.get("postcode",'')
-        phone = request.POST.get("phone",'')
+    def post(self, request):
+        receiver = request.POST.get("receiver", '')
+        address = request.POST.get("address", '')
+        postcode = request.POST.get("postcode", '')
+        phone = request.POST.get("phone", '')
 
         username = request.user
         # print(username,receiver,postcode,address,phone)
@@ -287,12 +324,12 @@ class UserAddressView(LoginRequiredMixin,View):
 
         return redirect(reverse('user:user'))
 
-class UserCarView(LoginRequiredMixin,View):
+
+class UserCarView(LoginRequiredMixin, View):
     '''用户中心--收货地址'''
+
     def get(self, request):
         return render(request, "cart.html")
-
-
 
 
 def validate_cod(request):
@@ -318,8 +355,8 @@ def validate_cod(request):
         rand_str += str1[random.randrange(0, len(str1))]
 
     # 把验证码保存到session
-    request.session["validate_code"]=rand_str
-    print(rand_str,1111)
+    request.session["validate_code"] = rand_str
+    print(rand_str, 1111)
 
     # 构造字体对象
     font = ImageFont.truetype(settings.FOND_STYLE, 20)
@@ -327,7 +364,7 @@ def validate_cod(request):
     fontcolor = (255, random.randrange(0, 255), random.randrange(0, 255))
     # 绘制4个字
     for i in range(4):
-        draw.text((5 +25*i, 2), rand_str[i], font=font, fill=fontcolor)
+        draw.text((5 + 25 * i, 2), rand_str[i], font=font, fill=fontcolor)
 
     # 释放画笔
     del draw
@@ -341,25 +378,9 @@ def validate_cod(request):
 
 
 def index(request):
-    return render(request,"index.html")
-
+    return render(request, "index.html")
 
 
 def logout_view(request):
     logout(request)
-    return render(request,'index.html')
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+    return render(request, 'index.html')
