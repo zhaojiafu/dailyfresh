@@ -1,0 +1,50 @@
+{#所有都有的页面#}
+
+{#以下继承：#}
+
+{#base2-bottom-and-head-top.html#}
+{#base3-bottom-head_top-head_head-user_car.html#}
+{#base3-bottom-head_top-head_head-user_seek.html#}
+
+{#6、login.html 登录页面#}
+{#7、register.html 注册页面，已加入了初步的表单验证效果，此效果在课程中已讲述如何制作。#}
+
+{% load static from staticfiles %}
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+        "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en">
+<head>
+    <meta http-equiv="Content-Type" content="text/html;charset=UTF-8">
+    {% block head-title %}
+        <title>base-one-bottom.html</title>
+    {% endblock %}
+    {% block head-content %}
+
+    {% endblock %}
+    <link rel="stylesheet" type="text/css" href="{% static 'css/reset.css' %}">
+    <link rel="stylesheet" type="text/css" href="{% static 'css/main.css' %}">
+</head>
+<body>
+{% block body-one %}
+{% endblock %}
+
+
+<div class="footer">
+    <div class="foot_link">
+        <a href="#">关于我们</a>
+        <span>|</span>
+        <a href="#">联系我们</a>
+        <span>|</span>
+        <a href="#">招聘人才</a>
+        <span>|</span>
+        <a href="#">友情链接</a>
+    </div>
+    <p>CopyRight © 2016 北京天天生鲜信息技术有限公司 All Rights Reserved</p>
+    <p>电话：010-****888 京ICP备*******8号</p>
+</div>
+{% block body-buttem %}
+{% endblock %}
+</body>
+</html>
+{% block buttem_buttem %}
+{% endblock %}

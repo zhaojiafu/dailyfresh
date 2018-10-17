@@ -1,0 +1,77 @@
+{% extends 'base3-bottom-head_top-head_head-user_seek.html' %}
+{% load static from staticfiles %}
+{% block head-title %}
+    <title>天天生鲜-用户中心</title>
+{% endblock %}
+{% block head-content %}
+    <script src="/static/js/jquery-1.12.4.min.js"></script>
+    <style type="text/css">
+        .right_content1 {
+            width: 980px;
+            float: right;
+            min-height: 500px;
+            background-color: #f9f9f9;
+        }
+
+        #addr1{
+            border: 2px lightgray;
+            background-color: #f9f9f9;
+        }
+
+        .addr tr{
+            width: 100%;
+            height: 25px;
+        }
+
+        th{
+            width:auto;
+            font-size: 14px;
+        }
+
+        td{
+            text-align: center;
+        }
+
+    </style>
+    <script type="text/javascript">
+        $(function () {
+            get_all_address()
+
+        })
+        function get_all_address() {
+            $.ajax({
+                url: '/user/address_all',
+                success: function (data) {
+                    console.log(typeof data.address_list, 0000)
+                    var address_list1 = eval('(' + data.address_list + ')')
+                    console.log(typeof address_list1, 1111)
+                    $.each(address_list1, function (index, item) {
+                        {#                        console.log(index,111)//address_list,page俩个键#}
+                        {#                        console.log(item,1111)//address_list,page俩个键对应的值#}
+                        console.log(item.fields.addr)
+                        {#                        var option = '<option value="' + item.pk + '">' + item.fields.pname + '</option>'#}
+                        var opt = '<tr><td>' + item.fields.receiver + '</td>' + '<td>' + item.fields.phone + '</td>' + '<td>' + item.fields.addr + '</td>' + '<td>' + '<a href="#">' + '修改' + '</a>    ' + '<a href="#">' + '删除' + '</a>' + '</td>' + '<td>' + item.fields.is_default + '</td></tr>'
+                        $('#addr1').append(opt)
+
+                        {##}
+                    })
+                }
+            })
+
+        }
+    </script>
+{% endblock %}
+{% block body3-has-seek %}
+    <div class="right_content1">
+        <table class="addr" id="addr1" border="2">
+            <tr>
+                <th style="width: 80px">收货人</th>
+                <th style="width: 120px">电话</th>
+                <th style="width: 300px">收货地址</th>
+                <th style="width: 100px">操作</th>
+                <th style="width: 80px">是否默认</th>
+            </tr>
+        </table>
+    </div>
+{% endblock %}
+
