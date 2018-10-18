@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>省市区</title>
+    <script src="/static/js/jquery-1.12.4.min.js"></script>
+    <script type="text/javascript">
+        $(function () {
+            //发送请求,省份,显示所有省份
+            get_all_province()
+            //省份改变调用函数
+            change_province()
+            //城市改变调用函数
+            change_city()
+        })
+        function get_all_province() {
+            //发送请求,省份,显示所有省份
+            $.ajax({
+                url: '/provinces/get_all_province',
+                success: function (data) {
+                    data1 = eval('(' + data.province_list + ')')
+                    $.each(data1, function (index, item) {
+                        var option = '<option value="' + item.pk + '">' + item.fields.pname + '</option>'
+                        $('#province_id').append(option)
+                    })
+                }
+            })
+        }
+        function change_province() {
+            //省份改变调用函数
+            $('#province_id').change(function () {
+                $('#city_id').html('<option value="0">-----------------</option>')
+                $('#area_id').html('<option value="0">-----------------</option>')
+                $.ajax({
+                    url: '/provinces/get_city_by_id',
+                    data: {'province_id': $('#province_id').val()},
+                    success: function (data) {
+                        data1 = eval('(' + data.city_list + ')')
+                        $.each(data1, function (index, item) {
+                            var option = '<option value="' + item.pk + '">' + item.fields.cname + '</option>'
+                            $('#city_id').append(option)
+                        })
+                    }
+                })
+            })
+        }
+        function change_city() {
+            //城市改变调用函数
+            $('#city_id').change(function () {
+                $('#area_id').html('<option value="0">-----------------</option>')
+                $.ajax({
+                    url: '/provinces/get_area_by_id',
+                    data: {'city_id': $('#city_id').val()},
+                    success: function (data) {
+                        data1 = eval('(' + data.area_list + ')')
+                        $.each(data1, function (index, item) {
+                            var option = '<option value="' + item.pk + '">' + item.fields.aname + '</option>'
+                            $('#area_id').append(option)
+                        })
+                    }
+                })
+            })
+        }
+
+    </script>
+</head>
+<body>
+<h1>三级联动</h1>
+<div>
+    省：<select name="province_id" id="province_id">
+    <option value="0">-----------------</option>
+</select>
+    市:<select name="city_id" id="city_id">
+    <option value="0">-----------------</option>
+</select>
+    区/县:<select name="area_id" id="area_id">
+    <option value="0">-----------------</option>
+</select>
+</div>
+</body>
+</html>
