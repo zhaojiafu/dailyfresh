@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>菜鸟教程(runoob.com)</title>
+    <script src="https://cdn.staticfile.org/jquery/1.10.2/jquery.min.js">
+    </script>
+    <script>
+        $(document).ready(function () {
+            console.log(1111)
+            $("button").click(function () {
+                console.log(222)
+                $.getJSON("/static/js/site.js", function (result) {
+                    console.log(3333)
+                    $.each(result, function (i, field) {
+                        $("div").append(field + " ");
+                    });
+                });
+            });
+        });
+    </script>
+</head>
+<body>
+
+<button>获取 JSON 数据</button>
+<div></div>
+
+</body>
+</html>
+
+
+{#<!DOCTYPE html>#}
+{#<html lang="en">#}
+{#<head>#}
+{#    <meta charset="UTF-8">#}
+{#    <title>Title</title>#}
+{#    <script src="/static/js/jquery-1.12.4.min.js"></script>#}
+{#    <script type="text/javascript">#}
+{#        $(document).ready(function () {#}
+{#            console.info(111)#}
+{#            $.getJSON("/static/js/province.js", function () {#}
+{#                console.info(222)#}
+{#            })#}
+{#        })#}
+{##}
+{#    </script>#}
+{#    <script type="text/javascript">#}
+{#        $(document).ready(function () {#}
+{#            //加载省市区数据#}
+{#            console.log(111)#}
+{#            $.getJSON("/staitc/js/province.js", function (result) {#}
+{#                    console.log(222)#}
+{#                })#}
+{##}
+{#            $.getJSON("/static/js/province.js", function (data1) {#}
+{#                //得到省份信息显示#}
+{#                console.log(2222)#}
+{#                $.each(data1, function (index, item) {#}
+{#                    console.log(index)#}
+{#                    var option = '<option value="' + index + '">' + item.name + '</option>'#}
+{#                    $('#province_id').append(option)#}
+{#                })#}
+{#                //省份改变显示对应的市#}
+{#                $("#province_id").change(function () {#}
+{#                    //省份改变之后把一前的城市和区/县清空#}
+{#                    $('#city_id').html('<option value="0">-----------------</option>')#}
+{#                    $('#area_id').html('<option value="0">-----------------</option>')#}
+{#                    //获取当前省份的json对象#}
+{#                    var data2 = data1[$(this).val()]#}
+{#                    //遍历获取省份对应的市#}
+{#                    $.each(data2.child, function (index1, item1) {#}
+{#                        var option = '<option value="' + index1 + '">' + item1.name + '</option>'#}
+{#                        $('#city_id').append(option)#}
+{#                    })#}
+{#                })#}
+{#                //城市的改变显示对应的区/县#}
+{#                $("#city_id").change(function () {#}
+{#                    //城市改变之后把一前的区/县清空#}
+{#                    $('#area_id').html('<option value="0">-----------------</option>')#}
+{#                    //获取当前城市的json对象#}
+{#                    var data2 = data1[$("#province_id").val()]#}
+{#                    var data3 = data2.child[$(this).val()]#}
+{#                    console.log($(this).val())#}
+{#                    //遍历获取对应的市#}
+{#                    $.each(data3.child, function (index2, item2) {#}
+{#                        console.log(index2)#}
+{#                        console.log(item2)#}
+{#                        var option = '<option value="' + index2 + '">' + item2 + '</option>'#}
+{#                        $('#area_id').append(option)#}
+{#                    })#}
+{#                    })#}
+{#                })#}
+{#        });#}
+{#    </script>#}
+{#</head>#}
+{#<body>#}
+{##}
+{#</body>#}
+{#</html>#}
